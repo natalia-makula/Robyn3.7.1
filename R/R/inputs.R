@@ -176,6 +176,7 @@ robyn_inputs <- function(dt_input = NULL,
                          ...) {
 
   ### Use case 1: running robyn_inputs() for the first time
+  #stop("error message")
   if (is.null(InputCollect)) {
     dt_input <- as_tibble(dt_input)
     # if (!is.null(dt_holidays)) dt_holidays <- as_tibble(dt_holidays) %>%
@@ -185,10 +186,10 @@ robyn_inputs <- function(dt_input = NULL,
 
     ## Check for NA valuesss
     check_nas(dt_input)
-    message(paste("robyn_inputs check_nas(dt_input) done:", collapse = ", ")))
+    message(paste("robyn_inputs check_nas(dt_input) doneee:", collapse = ", "))
 
     check_nas(dt_holidays)
-    message(paste("robyn_inputs check_nas(dt_holidays) done:", collapse = ", ")))
+    message(paste("robyn_inputs check_nas(dt_holidays) done:", collapse = ", "))
 
 
     ## Check vars names (duplicates and valid)
@@ -201,15 +202,15 @@ robyn_inputs <- function(dt_input = NULL,
 
     ## Check date input (and set dayInterval and intervalType)
     date_input <- check_datevar(dt_input, date_var)
-    message(paste("robyn_inputs check_datevar(dt_input, date_var) done:", collapse = ", ")))
+    message(paste("robyn_inputs check_datevar(dt_input, date_var) done:", collapse = ", "))
     dt_input <- date_input$dt_input # sorted date by ascending
-    message(paste("robyn_inputs dt_input <- date_input$dt_input done:", collapse = ", ")))
+    message(paste("robyn_inputs dt_input <- date_input$dt_input done:", collapse = ", "))
     date_var <- date_input$date_var # when date_var = "auto"
-    message(paste("robyn_inputs date_var done:", collapse = ", ")))
+    message(paste("robyn_inputs date_var done:", collapse = ", "))
     dayInterval <- date_input$dayInterval
-    message(paste("robyn_inputs dayInterval done:", collapse = ", ")))
+    message(paste("robyn_inputs dayInterval done:", collapse = ", "))
     intervalType <- date_input$intervalType
-    message(paste("robyn_inputs intervalType done:", collapse = ", ")))
+    message(paste("robyn_inputs intervalType done:", collapse = ", "))
 
     ## Check dependent var
     check_depvar(dt_input, dep_var, dep_var_type)
@@ -219,7 +220,7 @@ robyn_inputs <- function(dt_input = NULL,
       dt_holidays <- prophet_vars <- prophet_country <- prophet_signs <- NULL
     }
     prophet_signs <- check_prophet(dt_holidays, prophet_country, prophet_vars, prophet_signs, dayInterval)
-    message(paste("robyn_inputs prophet_signs done:", collapse = ", ")))
+    message(paste("robyn_inputs prophet_signs done:", collapse = ", "))
 
     ## Check baseline variables (and maybe transform context_signs)
     context <- check_context(dt_input, context_vars, context_signs)
@@ -249,7 +250,7 @@ robyn_inputs <- function(dt_input = NULL,
 
     ## Check window_start & window_end (and transform parameters/data)
     windows <- check_windows(dt_input, date_var, all_media, window_start, window_end)
-    message(paste("robyn_inputs check_windows done:", collapse = ", ")))
+    message(paste("robyn_inputs check_windows done:", collapse = ", "))
 
     if (TRUE) {
       dt_input <- windows$dt_input
@@ -268,7 +269,7 @@ robyn_inputs <- function(dt_input = NULL,
     hyperparameters <- check_hyperparameters(
       hyperparameters, adstock, paid_media_spends, organic_vars, exposure_vars
     )
-    message(paste("robyn_inputs check_hyperparameters done:", collapse = ", ")))
+    message(paste("robyn_inputs check_hyperparameters done:", collapse = ", "))
 
 
     ## Check calibration and iters/trials
@@ -561,7 +562,7 @@ robyn_engineering <- function(x, ...) {
   colnames(dt_transform)[colnames(dt_transform) == InputCollect$date_var] <- "ds"
   colnames(dt_transform)[colnames(dt_transform) == InputCollect$dep_var] <- "dep_var"
   dt_transform <- arrange(dt_transform, .data$ds)
-  message(paste("robyn_engineering dt_transform:", paste(head(dt_transform,2), collapse = ", ")))
+  message(paste("robyn_engineering dt_transform:", paste(head(dt_transform,1), collapse = ", ")))
 
 
   # dt_transformRollWind
@@ -645,7 +646,7 @@ robyn_engineering <- function(x, ...) {
   ## transform all factor variables
   if (length(factor_vars) > 0) {
     dt_transform <- mutate_at(dt_transform, factor_vars, as.factor)
-    message(paste("robyn_engineering mute_at(dt_transform):", paste(head(dt_transform,2), collapse = ", ")))
+    message(paste("robyn_engineering mute_at(dt_transform):", paste(head(dt_transform,1), collapse = ", ")))
   }
 
   ################################################################
@@ -668,8 +669,9 @@ robyn_engineering <- function(x, ...) {
     )
     prophet_custom_args <- setdiff(names(custom_params), robyn_args)
     if (length(prophet_custom_args) > 0) {
-      message(paste("Using custom prophet parameters:", paste(prophet_custom_args, collapse = ", ")))
+      message(paste("Using custom prophet parameters:", paste(head(prophet_custom_args,1), collapse = ", ")))
     }
+    message(paste("robyn_engineering.prophet_decomp  :", collapse = ", "))
     dt_transform <- prophet_decomp(
       dt_transform,
       dt_holidays = InputCollect$dt_holidays,
@@ -720,9 +722,13 @@ prophet_decomp <- function(dt_transform, dt_holidays,
                            prophet_country, prophet_vars, prophet_signs,
                            factor_vars, context_vars, paid_media_spends,
                            intervalType, dayInterval, custom_params) {
+  message(paste("In prophet_decomp :", collapse = ", "))
   check_prophet(dt_holidays, prophet_country, prophet_vars, prophet_signs, dayInterval)
+  message(paste("Finished prophet_decomp.check_prophet :", collapse = ", "))
   recurrence <- select(dt_transform, .data$ds, .data$dep_var) %>% rename("y" = "dep_var")
+  #message(paste("Finished prophet_decomp.recurrence:", paste(head(recurrence,1), collapse = ", ")))
   holidays <- set_holidays(dt_transform, dt_holidays, intervalType)
+  message(paste("Finished prophet_decomp.set_holidays:", paste(head(holidays,1), collapse = ", ")))
   use_trend <- "trend" %in% prophet_vars
   use_holiday <- "holiday" %in% prophet_vars
   use_season <- "season" %in% prophet_vars | "yearly.seasonality" %in% prophet_vars
@@ -984,13 +990,20 @@ set_holidays <- function(dt_transform, dt_holidays, intervalType) {
 
   if (intervalType == "week") {
     weekStartInput <- lubridate::wday(dt_transform$ds[1], week_start = 1)
-    if (!weekStartInput %in% c(1, 7)) stop("Week start has to be Monday or Sunday")
-    holidays <- dt_holidays %>%
-      mutate(ds = floor_date(.data$ds, unit = "week", week_start = weekStartInput)) %>%
-      select(.data$ds, .data$holiday, .data$country, .data$year) %>%
-      group_by(.data$ds, .data$country, .data$year) %>%
-      summarise(holiday = paste(.data$holiday, collapse = ", "), n = n())
-  }
+    message(paste("finished week set_holidays weekStartInput:", collapse = ", ")) #head(weekStartInput)
+    holidays <- dt_holidays #%>%
+    message(paste("finished week asigning holidays in set_holidays :",  collapse = ", "))
+
+    #if (!weekStartInput %in% c(1, 7)) stop("Week start has to be Monday or Sunday")
+      #message(paste("weekStartInput not set_holidays mutate:", paste( collapse = ", ")))
+      #mutate(ds = floor_date(.data$ds, unit = "week", week_start = weekStartInput)) #%>%
+      #message(paste("finished week set_holidays mutate:", collapse = ", "))
+      #select(.data$ds, .data$holiday, .data$country, .data$year) #%>%
+      #group_by(.data$ds, .data$country, .data$year) #%>%
+      #message(paste("finished week set_holidays group_by:", collapse = ", "))
+      #summarise(holiday = paste(head(.data$holiday,1), collapse = ", "), n = n())
+      #message(paste("finished week set_holidays summarise:", collapse = ", "))
+    }
 
   if (intervalType == "month") {
     if (!all(day(dt_transform$ds) == 1)) {
@@ -1003,6 +1016,6 @@ set_holidays <- function(dt_transform, dt_holidays, intervalType) {
       group_by(.data$ds, .data$country, .data$year) %>%
       summarise(holiday = paste(.data$holiday, collapse = ", "), n = n())
   }
-
+  #message(paste("finished set_holidays functions:", collapse = ", "))
   return(holidays)
 }

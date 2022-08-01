@@ -202,6 +202,7 @@ hyperparameters <- list(
 
 #### 2a-3: Third, add hyperparameters into robyn_inputs()
 
+
 InputCollect <- robyn_inputs(InputCollect = InputCollect, hyperparameters = hyperparameters)
 print(InputCollect)
 

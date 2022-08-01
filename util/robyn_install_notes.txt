@@ -53,10 +53,17 @@ P: Python
       R: 'install.packages('lares')'
       R: 'install.packages('openssl')'
       S: 'conda install r r-nloptr'  # Why conda install here?
-      R: 'remotes::install_github("facebookexperimental/Robyn/R")' 
-          # Was afraid to update packages so I chose no update (3)
-          # Tried all since there was only one package.  
-            # nloptr (1.2.2.3 -> 2.0.0) [CRAN]
+
+      #TODO replace below with subsequent TODO
+          R: 'remotes::install_github("facebookexperimental/Robyn/R")'
+              # Was afraid to update packages so I chose no update (3)
+              # Tried all since there was only one package.
+                # nloptr (1.2.2.3 -> 2.0.0) [CRAN]
+      #TODO
+         P: git clone -b  test_p_robyn1234 https://github.com/facebookexperimental/Robyn.git
+         R: remotes::install_local(path="/Users/name/opt/miniconda3/envs/Robyn/R")
+              #keep above in the same path
+
       Decided to add r-essentials
           S: 'conda install -c conda-forge r-essentials'
 

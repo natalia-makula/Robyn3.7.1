@@ -183,7 +183,7 @@ try:
     df_simulated = pd.read_csv(sim_week_path)  # import as pandas data frame
     df_simulated['DATE'] = pd.to_datetime(df_simulated['DATE'],yearfirst=True,format="%Y-%m-%d").dt.date #pd.to_datetime(df_simulated['DATE']).dt.strftime("%Y-%m-%d")
     r_date=base.as_Date(pd.to_datetime(df_simulated['DATE']).dt.strftime("%Y-%m-%d"))
-    df_simulated['DATE'] =r_date# df_simulated.DATE.astype(str) #r_date#base.format(r_date, format="%Y-%m-%d")
+    df_simulated['DATE'] =df_simulated.DATE.astype(str) #r_date# df_simulated.DATE.astype(str) #r_date#base.format(r_date, format="%Y-%m-%d")
     #df_simulated=set_date(df_simulated)
     print(df_simulated.head())
     del df_simulated['row_num']
@@ -200,7 +200,7 @@ try:
     df_prophet = pd.read_csv(proph_hol_path)
     df_prophet['ds'] = pd.to_datetime(df_prophet['ds'],yearfirst=True,format="%Y-%m-%d").dt.date #pd.to_datetime(df_simulated['DATE']).dt.strftime("%Y-%m-%d")
     r_date_n = base.as_Date(pd.to_datetime(df_prophet['ds']).dt.strftime("%Y-%m-%d"))
-    df_prophet['ds'] = r_date_n#df_prophet.ds.astype(str) #r_date_n#base.format(r_date_n, format="%Y-%m-%d")
+    df_prophet['ds'] = df_prophet.ds.astype(str) #r_date_n#df_prophet.ds.astype(str) #r_date_n#base.format(r_date_n, format="%Y-%m-%d")
     #df_prophet['holiday']=df_prophet.holiday.astype(str)
     del df_prophet[df_prophet.columns[0]]
     #df_prophet = set_date(df_prophet)
@@ -219,6 +219,8 @@ try:
 
     # Run ?robyn_inputs to check parameter definition
     # TODO
+
+
 
     robyn.check_nas(df=df_simulated)
 
@@ -243,33 +245,66 @@ try:
         , adstock="geometric"
     )
 
-    print(0)
-    #hyper_names = robyn.hyper_names(adstock = input_collect[33], all_media = input_collect[23)
-    #TODO run below
-    ###### ROBYN CHECK WINDOWS CALL ########
-    #robyn.check_windows(dt_input=r_df_simulated,date_var="DATE",all_media=[np.array(["tv_S"]),np.array(["newsletter"])],window_start="2016-11-21", window_end="2018-08-20")
-    '''
-    hyper_params = pd.DataFrame(data=[[0.5, 3], [0.3, 1],
-                           [0, 0.3],[0.5, 3],
-                           [0.3, 1],[0.1, 0.4],
-                           [0.5, 3],[0.3, 1],
-                           [0.3, 0.8],[0.5, 3],
-                           [0.3, 1],[0, 0.3],
-                           [0.5, 3],[0.3, 1],
-                           [0.1, 0.4],[0.5, 3],
-                           [0.3, 1],[0.1, 0.4]],
-                columns=['facebook_S_alphas', 'facebook_S_gammas',
-                  'facebook_S_thetas','print_S_alphas',
-                  'print_S_gammas','print_S_thetas',
-                  'tv_S_alphas','tv_S_gammas',
-                  'tv_S_thetas','search_S_alphas',
-                  'search_S_gammas','search_S_thetas',
-                  'ooh_S_alphas','ooh_S_gammas',
-                  'ooh_S_thetas','newsletter_alphas',
-                  'newsletter_gammas','newsletter_thetas']) '''
 
 
-    param_names=['facebook_S_alphas', 'facebook_S_gammas',
+    class RobynWrangling:
+        def __init__(self):
+            pass
+
+        def set_holidays_param(self,
+                               input_collect,
+                               holiday):
+            '''
+            must be day,week, or month
+            e.g robjects.ListVector(input_collect)[7][0] = "day"
+            :return:
+            '''
+            robjects.ListVector(input_collect)[7][0] = holiday
+
+    class InnerRobynFunctions:
+        def __init__(self, robyn_object):
+            self.robyn=robyn_object
+
+        def check_windows(self):
+            self.robyn.check_windows(dt_input=r_df_simulated, date_var="DATE",
+                                all_media=[np.array(["tv_S"]), np.array(["newsletter"])], window_start="2016-11-21",
+                                window_end="2018-08-20")
+
+        def hyper_names(self,input_collect):
+            self.robyn.hyper_names(adstock = input_collect[33], all_media = input_collect[23])
+
+        def check_legacy_input(self,input_collect):
+            self.robyn.check_legacy_input(input_collect)
+
+        def check_calibration(self,input_collect):
+            self.calibration_input = self.robyn.check_calibration(dt_input=input_collect[0], date_var=input_collect[5],
+                                                        calibration_input=input_collect[4],
+                                                        dayInterval=input_collect[6], dep_var=input_collect[8],
+                                                        window_start=input_collect[26],
+                                                        window_end=input_collect[28],
+                                                        paid_media_spends=input_collect[17],
+                                                        organic_vars=input_collect[20])
+
+        def manual_hyperparam_check(self,
+                                    input_collect,
+                                    hp):
+
+            input_collect.rx2['hyperparameters'] = hp
+            hp_check = self.robyn.check_hyperparameters(hyperparameters=input_collect.rx2['hyperparameters'],
+                                                   adstock=input_collect[32],
+                                                   paid_media_spends=input_collect.rx2['paid_media_spends'],
+                                                   organic_vars=input_collect.rx2['organic_vars'],
+                                                   exposure_vars=input_collect.rx2['organic_vars'])
+
+        def robyn_engineering(self):
+            self.robyn.robyn_engineering(input_collect)
+
+
+
+    class HyperparamInit:
+        def __init__(self):
+
+            self.param_names=['facebook_S_alphas', 'facebook_S_gammas',
                                                       'facebook_S_thetas', 'print_S_alphas',
                                                       'print_S_gammas', 'print_S_thetas',
                                                       'tv_S_alphas', 'tv_S_gammas',
@@ -279,86 +314,67 @@ try:
                                                       'ooh_S_thetas', 'newsletter_alphas',
                                                       'newsletter_gammas', 'newsletter_thetas']
 
-    param_vals=[[0.5, 3], [0.3, 1],
-                         [0, 0.3], [0.5, 3],
-                         [0.3, 1], [0.1, 0.4],
-                         [0.5, 3], [0.3, 1],
-                         [0.3, 0.8], [0.5, 3],
-                         [0.3, 1], [0, 0.3],
-                         [0.5, 3], [0.3, 1],
-                         [0.1, 0.4], [0.5, 3],
-                         [0.3, 1], [0.1, 0.4]]
+            self. param_vals=[[0.5, 3], [0.3, 1],
+                                 [0, 0.3], [0.5, 3],
+                                 [0.3, 1], [0.1, 0.4],
+                                 [0.5, 3], [0.3, 1],
+                                 [0.3, 0.8], [0.5, 3],
+                                 [0.3, 1], [0, 0.3],
+                                 [0.5, 3], [0.3, 1],
+                                 [0.1, 0.4], [0.5, 3],
+                                 [0.3, 1], [0.1, 0.4]]
 
-    param_dict={}
-    for e, p in enumerate(param_vals):
-        #param_dict[param_names[e]]=np.array(p)
-        param_dict[param_names[e]]=robjects.FloatVector(p) # np.array(p)
+        def get_hp_listvec(self):
+
+            param_dict={}
+            for e, p in enumerate(self.param_vals):
+                #param_dict[param_names[e]]=np.array(p)
+                param_dict[self.param_names[e]]=robjects.FloatVector(p) # np.array(p)
+
+            hp = robjects.ListVector(param_dict)
+            return hp
+
+
+        def get_hp_tagged_list(self):
+            hp_tl = rlc.TaggedList(self.param_vals, tags=('facebook_S_alphas', 'facebook_S_gammas',
+                                                   'facebook_S_thetas', 'print_S_alphas',
+                                                   'print_S_gammas', 'print_S_thetas',
+                                                   'tv_S_alphas', 'tv_S_gammas',
+                                                   'tv_S_thetas', 'search_S_alphas',
+                                                   'search_S_gammas', 'search_S_thetas',
+                                                   'ooh_S_alphas', 'ooh_S_gammas',
+                                                   'ooh_S_thetas', 'newsletter_alphas',
+                                                   'newsletter_gammas', 'newsletter_thetas'))
+            return hp_tl
+
+        def get_hp_r_version(self):
+            hp_r =robjects.r('list(facebook_S_alphas = c(0.5, 3),facebook_S_gammas = c(0.3, 1) ,'
+                          'facebook_S_thetas = c(0, 0.3),print_S_alphas = c(0.5, 3),print_S_gammas = c(0.3, 1),print_S_thetas = c(0.1, 0.4),tv_S_alphas = c(0.5, 3),tv_S_gammas = c(0.3, 1), tv_S_thetas = c(0.3, 0.8),search_S_alphas = c(0.5, 3) ,search_S_gammas = c(0.3, 1),search_S_thetas = c(0, 0.3),ooh_S_alphas = c(0.5, 3),ooh_S_gammas = c(0.3, 1),ooh_S_thetas = c(0.1, 0.4),newsletter_alphas = c(0.5, 3),newsletter_gammas = c(0.3, 1),newsletter_thetas = c(0.1, 0.4))')
+            return hp_r
 
 
 
-    # try:
-    hp = robjects.ListVector(param_dict)
-    hp2 = rlc.TaggedList(param_vals, tags=('facebook_S_alphas', 'facebook_S_gammas',
-                                           'facebook_S_thetas', 'print_S_alphas',
-                                           'print_S_gammas', 'print_S_thetas',
-                                           'tv_S_alphas', 'tv_S_gammas',
-                                           'tv_S_thetas', 'search_S_alphas',
-                                           'search_S_gammas', 'search_S_thetas',
-                                           'ooh_S_alphas', 'ooh_S_gammas',
-                                           'ooh_S_thetas', 'newsletter_alphas',
-                                           'newsletter_gammas', 'newsletter_thetas'))
-
-    hp_n=robjects.r('list(facebook_S_alphas = c(0.5, 3),facebook_S_gammas = c(0.3, 1) ,'
-                  'facebook_S_thetas = c(0, 0.3),print_S_alphas = c(0.5, 3),print_S_gammas = c(0.3, 1),print_S_thetas = c(0.1, 0.4),tv_S_alphas = c(0.5, 3),tv_S_gammas = c(0.3, 1), tv_S_thetas = c(0.3, 0.8),search_S_alphas = c(0.5, 3) ,search_S_gammas = c(0.3, 1),search_S_thetas = c(0, 0.3),ooh_S_alphas = c(0.5, 3),ooh_S_gammas = c(0.3, 1),ooh_S_thetas = c(0.1, 0.4),newsletter_alphas = c(0.5, 3),newsletter_gammas = c(0.3, 1),newsletter_thetas = c(0.1, 0.4))')
-    hyper_names = robyn.hyper_names(adstock = input_collect[32], all_media = input_collect[22])
-    robyn.check_legacy_input(input_collect)
-    calibration_input= robyn.check_calibration(dt_input=input_collect[0],date_var=input_collect[5],calibration_input=input_collect[4],
-                                               dayInterval=input_collect[6],  dep_var=input_collect[8], window_start=input_collect[26],
-                                               window_end=input_collect[28], paid_media_spends=input_collect[17], organic_vars=input_collect[20])
-    input_collect.rx2['hyperparameters'] = hp
+    HP=HyperparamInit()
+    hp= HP.get_hp_listvec()
+    input_collects = robyn.robyn_inputs(InputCollect=input_collect, hyperparameters=hp)
+    logger.info("SUCCESSFULLY LOADED INPUTS")
     try:
-        robyn.robyn_engineering(input_collect)
-    except:
-        logger.exception("error")
-    logger.info("added check_hyperparameters")
-    hp_check=robyn.check_hyperparameters(hyperparameters=input_collect.rx2['hyperparameters'], adstock=input_collect[32],
-                                paid_media_spends=input_collect.rx2['paid_media_spends'],
-                                organic_vars=input_collect.rx2['organic_vars'],
-                                exposure_vars=input_collect.rx2['organic_vars'])
-    logger.info("DONE check_hyperparameters")
 
-    robyn.robyn_run(InputCollect=input_collect
-    , iterations = 2000  # recommended for the dummy dataset
-    , trials = 5  # recommended for the dummy dataset
-    , outputs = False
-    )
-
-
-
-    robjects.ListVector(input_collect)[7][0] ="day"
-    #robyn.check_windows(dt_input=input_collect.rx2['dt_input'], date_var=input_collect.rx2['dt_input'].rx2['DATE'], window_start=input_collect.rx2['window_start'],
-                       # window_end=input_collect[28], all_media=input_collect.rx2['all_media'])
-    #input_collect.rx2['hyperparameters']
-
-    try:
-        input_collects = robyn.robyn_inputs(InputCollect=input_collect, hyperparameters=hp)
+        outputs = robyn.robyn_run(InputCollect=input_collects
+                                  , iterations=2000  # recommended for the dummy dataset
+                                  , trials=5  # recommended for the dummy dataset
+                                  , outputs=False
+                                  )
+        logger.info("SUCCESSFULLY OBTAINED OUTPUTS")
     except:
         logger.exception("ERROR")
 
-    outputs=robyn.robyn_run(
-          InputCollect = input_collect # feed in all model specification
-          #, cores = NULL # default
-          #, add_penalty_factor = FALSE # Untested feature. Use with caution.
-          , iterations = 2000 # recommended for the dummy dataset
-          , trials = 5 # recommended for the dummy dataset
-          , outputs = False # outputs = FALSE disables direct model output
-        )
 
 
-    logger.info('SUCCESS')
-    robyn.plot_adstock(plot=True)
-    robyn.plot_adstock(plot=True)
-    robyn.plot_saturation(plot = True)
+    #logger.info('SUCCESS')
+    #robyn.plot_adstock(plot=True)
+    #robyn.plot_adstock(plot=True)
+    #robyn.plot_saturation(plot = True)
 
 
 except :
