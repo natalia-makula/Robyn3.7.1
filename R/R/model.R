@@ -729,7 +729,7 @@ robyn_mmm <- function(InputCollect,
 
           # Calculate DECOMP.RSSD error
           if (!refresh) {
-            decomp.rssd <- sqrt(sum((dt_decompSpendDist$effect_share - dt_decompSpendDist$spend_share)^2))
+            decomp.rssd <- 0#sqrt(sum((dt_decompSpendDist$effect_share - dt_decompSpendDist$spend_share)^2))
           } else {
             # xDecompAggPrev is NULL?
             dt_decompRF <- select(decompCollect$xDecompAgg, .data$rn, decomp_perc = .data$xDecompPerc) %>%
@@ -744,8 +744,8 @@ robyn_mmm <- function(InputCollect,
               filter(!.data$rn %in% paid_media_spends) %>%
               summarise(rssd.nonmedia = sqrt(mean((.data$decomp_perc - .data$decomp_perc_prev)^2))) %>%
               pull(.data$rssd.nonmedia)
-            decomp.rssd <- decomp.rssd.media + decomp.rssd.nonmedia /
-              (1 - refresh_steps / rollingWindowLength)
+            decomp.rssd <- 0#decomp.rssd.media + decomp.rssd.nonmedia /
+              #(1 - refresh_steps / rollingWindowLength)
           }
           # When all media in this iteration have 0 coefficients
           if (is.nan(decomp.rssd)) {
@@ -766,7 +766,7 @@ robyn_mmm <- function(InputCollect,
           common <- c(
             rsq_train = mod_out$rsq_train,
             nrmse = nrmse,
-            decomp.rssd = decomp.rssd,
+            decomp.rssd = 0,#decomp.rssd,
             mape = mape,
             lambda = lambda_scaled,
             lambda_hp = lambda_hp,
